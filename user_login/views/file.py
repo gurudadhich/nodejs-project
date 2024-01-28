@@ -6,17 +6,31 @@ import mimetypes
 from rest_framework.response import Response
 from rest_framework import authentication, permissions, status
 from rest_framework.views import APIView
+from rest_framework.parsers import FormParser, MultiPartParser
 
-
-class FileUploadView(generics.CreateAPIView):
-    serializer_class = FileSerializer
+class FileUploadView(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+    serializer_class = FileSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(
+                
+                status=status.HTTP_201_CREATED
+            )
+        
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+ 
 
 class FileListView(generics.ListAPIView):
+    authentication_classes = [authentication.SessionAuthentication, authentication.TokenAuthentication]
     serializer_class = FileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -24,10 +38,14 @@ class FileListView(generics.ListAPIView):
         return File.objects.filter(user=self.request.user)
 
 class FileRemoveView(APIView):
+    authentication_classes = [authentication.SessionAuthentication, authentication.TokenAuthentication]
     serializer_class = FileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def delete(self, request, id):
+        print("remove file")
+        print(id)
+        print("****")
         try:
             file = File.objects.get(id=id,user=request.user)
             file.delete()

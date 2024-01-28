@@ -34,16 +34,11 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class FileSerializer(serializers.ModelSerializer):
-    file = serializers.SerializerMethodField()
-
     class Meta:
         model = File
         fields = ('id', 'user', 'file', 'unique_code',)
         read_only_fields = ('id',)
-        
-    def get_file(self, obj):
-        return self.context['request'].build_absolute_uri(obj.file.url)
-            
+                
 class UserWithFilesSerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, read_only=True)
 
