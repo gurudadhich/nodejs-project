@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
+from user_login.models import File
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -31,3 +33,20 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+class FileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = File
+        fields = ('id', 'user', 'file', 'unique_code',)
+        read_only_fields = ('id',)
+                
+class UserWithFilesSerializer(serializers.ModelSerializer):
+    files = FileSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'password', 'email', 'first_name', 'last_name', 'files',)
+        read_only_fields = ('id',)
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'username': {'write_only': True}
+        }
